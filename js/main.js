@@ -2,6 +2,8 @@
 
 var map; 
 
+var baseLayer;
+
 /*
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
@@ -34,6 +36,9 @@ function PopupContent(properties, attribute){
 }
 
 
+//var current_bike_paths;
+//var programmed_bike_paths;
+
 
 
 function createMap(){
@@ -41,16 +46,56 @@ function createMap(){
     map = L.map('map').setView([43.07, -89.4], 13);
 
     // set max bounds for the map -- MAY WANT TO ADJUST LATER
-    map.setMaxBounds(map.getBounds().pad(1));
+    map.setMaxBounds(map.getBounds().pad(2));
+
+    /* panes for hierarchy testing
+    map.createPane('top');
+    map.createPane('middle');
+    map.createPane('bottom');
+
+    map.getPane('top').style.zIndex = 380;
+    map.getPane('middle').style.zIndex = 360;
+    map.getPane('bottom').style.zIndex = 340;
+    */
 
     
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
-        minZoom: 11
+        minZoom: 11,
     }).addTo(map);
+
+
+    map.createPane("left");
+    map.createPane("right");
     
-    getData();
+
+    //var geojson = L.geoJson(euCountries, { pane: "middle"}).addTo(map);
+
+    current_bike_paths = fetch("data/current_bike_paths.geojson")
+        .then(function(response) {
+        return response.json();
+        })
+        .then(function(data) {
+            const current_bike_paths = L.geoJSON(data, {
+                pane: "left"
+            }).addTo(map);
+        });
+
+    
+    programmed_bike_paths = fetch("data/programmed_bike_paths.geojson")
+        .then(function(response) {
+        return response.json();
+        })
+        .then(function(data) {
+            const programmed_bike_paths = L.geoJSON(data, {
+                pane: "right",
+                color: "orange"
+            }).addTo(map);
+        });
+    
+
+    const side_by_side = L.control.sideBySide(current_bike_paths, programmed_bike_paths).addTo(map);
 
     /*
     const apiKey = "AAPK687ec9a6f43a4102a5643a782b2af43d0UZxfNN4IBEqL8Wr391f6Ky7kK5vTFQJLrG9WNeCBB8EpWm-wVGyoPHg6vs2lCa8";
@@ -66,19 +111,66 @@ function createMap(){
 
 };
 
-
+/*
 // Import GeoJSON data and add to map with stylized point markers
 function getData(){
     //load the data
+
+    fetch("data/current_bike_paths.geojson")
+        .then(function(response) {
+        return response.json();
+        })
+        .then(function(data) {
+            current_bike_paths = L.geoJSON(data, {pane: "left"}).addTo(map);
+        });
+
+    fetch("data/programmed_bike_paths.geojson")
+        .then(function(response) {
+        return response.json();
+        })
+        .then(function(data) {
+        programmed_bike_paths = L.geoJSON(data, {pane: "right"}).addTo(map);
+        });
+
+
+    const side_by_side = L.control.sideBySide(current_bike_paths, programmed_bike_paths).addTo(map);
+
+    /*
+    fetch("data/current_bike_paths.geojson")
+        .then(function(response){
+            return response.json();
+        })
+        .then(function(json){
+            var attributes = processData(json);
+
+            console.log("creating symbol");
+            //create a Leaflet GeoJSON layer and add it to the map
+            L.geoJson(json, {
+                pointToLayer: function(feature,latlng){
+                    return pointToLayer(feature, latlng, attributes);
+                },
+                pane: "middle"
+            }).addTo(map);
+        });
+
     fetch("data/project_locations.geojson")
         .then(function(response){
             return response.json();
         })
         .then(function(json){
             var attributes = processData(json);
-            createSymbols(json, attributes);
-        })
-};
+
+            console.log("creating symbol");
+            //create a Leaflet GeoJSON layer and add it to the map
+            L.geoJson(json, {
+                pointToLayer: function(feature,latlng){
+                    return pointToLayer(feature, latlng, attributes);
+                },
+                pane: "top"
+            }).addTo(map);
+        });
+    */
+
 
 
 // Create an array of the attributes to keep track of their order (for the slider)
@@ -100,17 +192,6 @@ function processData(data){
     return attributes;
 };
 
-
-function createSymbols(data, attributes){
-    
-    console.log("creating symbol");
-    //create a Leaflet GeoJSON layer and add it to the map
-    L.geoJson(data, {
-        pointToLayer: function(feature,latlng){
-            return pointToLayer(feature, latlng, attributes);
-        }
-    }).addTo(map);
-};
 
 
 // Attach pop-ups to each mapped feature
