@@ -2,23 +2,7 @@
 
 var map; 
 
-var baseLayer;
-
-/*
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-*/
-
-/*
-const clientId = 'APP_CLIENT_ID';
-const redirectUri = 'REDIRECT_URI';
-const signInButton = document.getElementById('sign-in');
-// do this on a button click to avoid popup blockers
-document.addEventListener('click', function(){
-    window.open('https://www.arcgis.com/sharing/rest/oauth2/authorize?client_id='+clientId+'&response_type=token&expiration=20160&redirect_uri=' + window.encodeURIComponent(redirectUri), 'oauth-window', 'height=400,width=600,menubar=no,location=yes,resizable=yes,scrollbars=yes,status=yes')
-});
-*/
+var minimalBasemap;
 
 
 // PopupContent constructor function
@@ -35,11 +19,36 @@ function PopupContent(properties, attribute){
     "</p><p><a href=\"" + link + "\">City of Madison Link</a></p>";
 }
 
+/* Stackoverflow code for loading geojson once when checkbox ticked
+   then storing the geojson so it doesn't load each time
+async function getGeojson(checkbox, layerName) {
+    if (layers[layerName]) {
+        if (checkbox.checked) layers[layerName].addTo(map);
+        else map.removeLayer(layers[layerName]);
+        return;
+    }
 
-//var current_bike_paths;
-//var programmed_bike_paths;
+    const response = await fetch(`data/${layerName}.geojson`);
+    const geojson = await response.json();
+    return geojson;
+}
 
+var layers = {};
 
+const togglejsonLayer = async (checkbox, layerName) => {
+    
+    console.log("layers: " + layers);
+    
+    const geojsonData = await getGeojson(checkbox, layerName);
+    const geojson = L.geoJSON([geojsonData], { });
+
+    const checkId = checkbox.id;
+    if (checkbox.checked) {
+        layers[layerName] = geojson;
+        layers[layerName].addTo(map);
+    } else map.removeLayer(layers[layerName]);
+};
+*/
 
 function createMap(){
 
@@ -58,120 +67,63 @@ function createMap(){
     map.getPane('bottom').style.zIndex = 340;
     */
 
-    
-    baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // set basemap
+    minimalBasemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
         minZoom: 11,
     }).addTo(map);
 
-
+    
+    // create panes for leaflet sideBySide
     map.createPane("left");
     map.createPane("right");
-    
 
-    //var geojson = L.geoJson(euCountries, { pane: "middle"}).addTo(map);
 
-    current_bike_paths = fetch("data/current_bike_paths.geojson")
-        .then(function(response) {
-        return response.json();
-        })
-        .then(function(data) {
-            const current_bike_paths = L.geoJSON(data, {
+    // fetch local geojson data through promises as json
+    var promises = [fetch("data/current_bike_paths.geojson").then(function(r) {return r.json()}), 
+                    fetch("data/programmed_bike_paths.geojson").then(function(r) {return r.json()})
+                    ];
+
+    // run callback function to manipulate json data after data is loaded
+    Promise.all(promises).then(callback); 
+
+    function callback(data) {
+
+        // set layers as geojson objects
+        var current_bike_paths = L.geoJSON(data[0], { 
                 pane: "left"
-            }).addTo(map);
-        });
-
-    
-    programmed_bike_paths = fetch("data/programmed_bike_paths.geojson")
-        .then(function(response) {
-        return response.json();
-        })
-        .then(function(data) {
-            const programmed_bike_paths = L.geoJSON(data, {
+            }),
+            programmed_bike_paths = L.geoJSON(data[1], {
                 pane: "right",
-                color: "orange"
-            }).addTo(map);
-        });
-    
+                color: "orange" 
+            });
 
-    const side_by_side = L.control.sideBySide(current_bike_paths, programmed_bike_paths).addTo(map);
 
-    /*
-    const apiKey = "AAPK687ec9a6f43a4102a5643a782b2af43d0UZxfNN4IBEqL8Wr391f6Ky7kK5vTFQJLrG9WNeCBB8EpWm-wVGyoPHg6vs2lCa8";
-    const myToken = "token=3NKHt6i2urmWtqOuugvr9WlJn6cDXqfbXhyEpx5B28XiZhV4GdvDEirP_IXrX0YUBJO9L2vRd7p_fgO6lFxSkLVSwHoX6ATgwiBSXwzWEsucmSuBlTp0YQMmj0JDcyB8tcY8W50xrKlR5Keel9HAtPsPAbsj-KawT-T2o7BGu7Vaj1g5-_9MLJ2zKNpNt7eljsp8UpL--x66oYtccV_EVFFf263Lnbbu-Qy5yJiOIvVEWGApQMQK3QsrgJ0fdhyx";
+        // assign a pane to each layer -- ERRORS
+        //current_bike_paths.pane = "left";
+        //programmed_bike_paths.pane = "right";
 
-    const basemapEnum = "https://tiles.arcgis.com/tiles/HRPe58bUyBqyyiCt/arcgis/rest/services/madison_minimal_base/VectorTileServer/tile/{z}/{y}/{x}.pbf";
+        // testing pane printing
+        //console.log(current_bike_paths.pane);
+        //console.log(programmed_bike_paths.pane);
+        
 
-    L.esri.Vector.vectorBasemapLayer(basemapEnum, {
-        token: myToken,
-        version: 1
-    }).addTo(map);
-    */
+        // add selected layers to map
+        current_bike_paths.addTo(map);
+        programmed_bike_paths.addTo(map);
+
+
+        // leaflet side by side compare of two layers
+        L.control.sideBySide(current_bike_paths, programmed_bike_paths).addTo(map);
+    }
+
 
 };
 
+    
+    
 /*
-// Import GeoJSON data and add to map with stylized point markers
-function getData(){
-    //load the data
-
-    fetch("data/current_bike_paths.geojson")
-        .then(function(response) {
-        return response.json();
-        })
-        .then(function(data) {
-            current_bike_paths = L.geoJSON(data, {pane: "left"}).addTo(map);
-        });
-
-    fetch("data/programmed_bike_paths.geojson")
-        .then(function(response) {
-        return response.json();
-        })
-        .then(function(data) {
-        programmed_bike_paths = L.geoJSON(data, {pane: "right"}).addTo(map);
-        });
-
-
-    const side_by_side = L.control.sideBySide(current_bike_paths, programmed_bike_paths).addTo(map);
-
-    /*
-    fetch("data/current_bike_paths.geojson")
-        .then(function(response){
-            return response.json();
-        })
-        .then(function(json){
-            var attributes = processData(json);
-
-            console.log("creating symbol");
-            //create a Leaflet GeoJSON layer and add it to the map
-            L.geoJson(json, {
-                pointToLayer: function(feature,latlng){
-                    return pointToLayer(feature, latlng, attributes);
-                },
-                pane: "middle"
-            }).addTo(map);
-        });
-
-    fetch("data/project_locations.geojson")
-        .then(function(response){
-            return response.json();
-        })
-        .then(function(json){
-            var attributes = processData(json);
-
-            console.log("creating symbol");
-            //create a Leaflet GeoJSON layer and add it to the map
-            L.geoJson(json, {
-                pointToLayer: function(feature,latlng){
-                    return pointToLayer(feature, latlng, attributes);
-                },
-                pane: "top"
-            }).addTo(map);
-        });
-    */
-
-
 
 // Create an array of the attributes to keep track of their order (for the slider)
 function processData(data){
@@ -227,23 +179,6 @@ function pointToLayer(feature, latlng, attributes){
     return layer;
 };
 
-
-document.addEventListener('DOMContentLoaded',createMap);
-
-
-
-//var map = L.map('map').setView([43.07, -89.4], 10);
-
-/*
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-//testing, remove
-L.tileLayer('https://tiles.arcgis.com/tiles/HRPe58bUyBqyyiCt/arcgis/rest/services/madison_minimal_base/VectorTileServer/tile/{z}/{y}/{x}.pbf',{
-    attribution: 'Will\'s Custom VT'
-}).addTo(map);
 */
 
-
-
+document.addEventListener('DOMContentLoaded',createMap);

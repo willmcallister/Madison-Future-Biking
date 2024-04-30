@@ -7,16 +7,20 @@ const osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 map.createPane("left")
 map.createPane("right")
 
-const leftCircle = L.circle([51.505, -0.09], {
-    pane: "left",
+var leftCircle = L.circle([51.505, -0.09], {
+    //pane: "left",
     radius: 1000,
     color: "#ff0000"
 }).addTo(map);
 
-const rightCircle = L.circle([51.505, -0.09], {
-    pane: "right",
+var rightCircle = L.circle([51.505, -0.09], {
+    //pane: "right",
     radius: 1000,
     color: "#0000ff"
 }).addTo(map);
+
+
+leftCircle.pane = "left";
+rightCircle.pane = "right";
 
 const side_by_side = L.control.sideBySide(leftCircle, rightCircle).addTo(map);
