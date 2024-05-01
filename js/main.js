@@ -4,11 +4,16 @@ var map;
 
 var minimalBasemap;
 
+var juxtapose = null;
+var comparisonGroup = null;
+var mainGroup = null;
+
+
 
 // PopupContent constructor function
-function PopupContent(properties, attribute){
-    this.properties = properties;
-    this.attribute = attribute;
+function PopupContent(feature){
+    this.properties = feature.properties;
+
     this.Project_Na = this.properties.Project_Na
     this.COM_Link = this.properties.COM_Link;
     this.Engineerin = this.properties.Engineerin;
@@ -19,36 +24,6 @@ function PopupContent(properties, attribute){
     "</p><p><a href=\"" + link + "\">City of Madison Link</a></p>";
 }
 
-/* Stackoverflow code for loading geojson once when checkbox ticked
-   then storing the geojson so it doesn't load each time
-async function getGeojson(checkbox, layerName) {
-    if (layers[layerName]) {
-        if (checkbox.checked) layers[layerName].addTo(map);
-        else map.removeLayer(layers[layerName]);
-        return;
-    }
-
-    const response = await fetch(`data/${layerName}.geojson`);
-    const geojson = await response.json();
-    return geojson;
-}
-
-var layers = {};
-
-const togglejsonLayer = async (checkbox, layerName) => {
-    
-    console.log("layers: " + layers);
-    
-    const geojsonData = await getGeojson(checkbox, layerName);
-    const geojson = L.geoJSON([geojsonData], { });
-
-    const checkId = checkbox.id;
-    if (checkbox.checked) {
-        layers[layerName] = geojson;
-        layers[layerName].addTo(map);
-    } else map.removeLayer(layers[layerName]);
-};
-*/
 
 function createMap(){
 
@@ -81,48 +56,89 @@ function createMap(){
 
 
     // fetch local geojson data through promises as json
-    var promises = [fetch("data/current_bike_paths.geojson").then(function(r) {return r.json()}), 
-                    fetch("data/programmed_bike_paths.geojson").then(function(r) {return r.json()})
+    var promises = [fetch("data/project_locations.geojson").then(function(r) {return r.json()}),
+                    fetch("data/current_bike_paths.geojson").then(function(r) {return r.json()}), 
+                    fetch("data/programmed_bike_paths.geojson").then(function(r) {return r.json()}),
+                    fetch("data/planned_feasible_bike_paths.geojson").then(function(r) {return r.json()})
                     ];
 
     // run callback function to manipulate json data after data is loaded
     Promise.all(promises).then(callback); 
 
-    function callback(data) {
-
-        // set layers as geojson objects
-        var current_bike_paths = L.geoJSON(data[0], { 
-                pane: "left"
-            }),
-            programmed_bike_paths = L.geoJSON(data[1], {
-                pane: "right",
-                color: "orange" 
-            });
-
-
-        // assign a pane to each layer -- ERRORS
-        //current_bike_paths.pane = "left";
-        //programmed_bike_paths.pane = "right";
-
-        // testing pane printing
-        //console.log(current_bike_paths.pane);
-        //console.log(programmed_bike_paths.pane);
-        
-
-        // add selected layers to map
-        current_bike_paths.addTo(map);
-        programmed_bike_paths.addTo(map);
-
-
-        // leaflet side by side compare of two layers
-        L.control.sideBySide(current_bike_paths, programmed_bike_paths).addTo(map);
-    }
-
 
 };
 
     
-    
+function callback(data) {
+
+    comparisonGroup = L.layerGroup();
+    mainGroup = L.layerGroup();
+
+    // set layers as geojson objects
+    var project_locations = L.geoJSON(data[0], { 
+        pointToLayer: function(feature, latlng){
+            return pointToLayer(feature, latlng);
+        }
+        }),
+        current_bike_paths = L.geoJSON(data[1], { 
+        pane: "left"
+        }),
+        programmed_bike_paths = L.geoJSON(data[2], {
+        pane: "right",
+        color: "orange" 
+        }),
+        planned_feasible_bike_paths = L.geoJSON(data[3], {
+        color: "yellow"
+        });
+
+    // assign a pane to each layer -- CAUSES ERRORS, NEED TO FIX
+    //current_bike_paths.pane = "left";
+    //programmed_bike_paths.pane = "right";
+
+    // add layers to main map group
+    mainGroup.addLayer(project_locations);
+
+
+    // assign left and right side for comparison 
+    // (hard coded now, will use user input later)
+    var leftSide = current_bike_paths;
+    var rightSide = programmed_bike_paths;
+
+    // add layers to compare to comparison group
+    comparisonGroup.addLayer(leftSide);
+    comparisonGroup.addLayer(rightSide);
+
+    // add leaflet side by side comparison of two layers to juxtapose control
+    juxtapose = L.control.sideBySide(leftSide, rightSide);
+
+
+    switchMap("mainMap"); // setup main map
+
+};
+
+
+function switchMap(val) {
+    if(val === "mainMap"){
+        // switch to main map
+        // remove comparison group layer and control
+        map.removeLayer(comparisonGroup);
+        map.removeControl(juxtapose);
+
+        // add main map group layer
+        map.addLayer(mainGroup);
+    }
+    else {
+        // switch to comparison map
+        // remove main map group layer
+        map.removeLayer(mainGroup);
+        
+        // add comparison group layer and control
+        map.addLayer(comparisonGroup);
+        map.addControl(juxtapose);
+    }
+};    
+
+
 /*
 
 // Create an array of the attributes to keep track of their order (for the slider)
@@ -144,13 +160,10 @@ function processData(data){
     return attributes;
 };
 
-
+*/
 
 // Attach pop-ups to each mapped feature
-function pointToLayer(feature, latlng, attributes){
-    
-    // attribute for scaling the proportional symbols
-    var attribute = attributes[0];
+function pointToLayer(feature, latlng){
 
     // create marker options
     var options = {
@@ -166,19 +179,20 @@ function pointToLayer(feature, latlng, attributes){
     var layer = L.circleMarker(latlng, options);
     
     
-    
     // create popup content
-    var popupContent = new PopupContent(feature.properties, attribute);
+    var popupContent = new PopupContent(feature);
     
     // bind the pop-up to the circle marker 
     layer.bindPopup(popupContent.formatted, {
         offset: new L.Point(0,-options.radius)
     });
     
+    
 
     return layer;
+    
 };
 
-*/
+
 
 document.addEventListener('DOMContentLoaded',createMap);

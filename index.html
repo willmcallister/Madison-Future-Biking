@@ -37,6 +37,13 @@
         Programmed Bike Paths
         -->
 
+        <div id="mapSelection" class="mapSelection"></div>
+        <input type="radio" id="mapChoice1" name="mapSelection" value="mainMap" onclick="switchMap(this.value);" checked/>
+        <label for="mapChoice1">Main Map</label>
+        <input type="radio" id="mapChoice2" name="mapSelection" value="comparisonMap" onclick="switchMap(this.value);"/>
+        <label for="mapChoice2">Comparison Map</label>
+
+
         <div id="map" class="map"></div>
 
         <!--you can also use this space for internal scripts;
@@ -46,17 +53,6 @@
         <script type="text/javascript" src="lib/leaflet/leaflet-src.js"></script>
         <script type="text/javascript" src="lib/leaflet-side-by-side/leaflet-side-by-side.js"></script>
         <script type="text/javascript" src="js/main.js"></script>
-
-
-
-        <script
-            src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"
-            integrity="sha512-G4+fuKc1B96F0sUG7eKtgiJr0JM3iQC4bfc8WtYvmm7msHES0Hst2mLWASPb8zZk91tqMG86AjP0tgXIEFPPUA=="
-            crossorigin=""></script>
-        <script
-            src="https://unpkg.com/esri-leaflet-vector@4.2.3/dist/esri-leaflet-vector.js"
-            integrity="sha512-/H7f4mjvCB73Rsi7cWCW0Z3Zl1InqvtGOQsipk5ClXhAxfrw6GSjEnPz2VVTuh7dE29ws8tS3OGHowmkEae2/A=="
-            crossorigin=""></script>
 
     </body>
 </html>
