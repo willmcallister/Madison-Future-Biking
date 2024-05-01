@@ -20,8 +20,20 @@ function PopupContent(feature){
 
     var link = this.COM_Link;
 
+    var photoImg;
+
+    if(this.Project_Na === "Sheboygan/Segoe Redesign")
+        photoImg = '<img src="data/infrastructure_mockups/575_Segoe.png" height="240px" width="400px"/>';
+    else if(this.Project_Na === "Autumn Ridge Path")
+        photoImg = '<img src="data/infrastructure_mockups/575_AutumnRidgeBridge.svg" height="240px" width="400px"/>';
+    else
+        photoImg = '<p>Image Coming Soon...</p>';
+
+        
+
     this.formatted = "<p><b>Project Name: </b>" + this.properties.Project_Na + 
-    "</p><p><a href=\"" + link + "\">City of Madison Link</a></p>";
+    "</p><p><a href=\"" + link + "\">City of Madison Link</a></p>" + "</br>"+ photoImg;
+
 }
 
 
@@ -184,7 +196,8 @@ function pointToLayer(feature, latlng){
     
     // bind the pop-up to the circle marker 
     layer.bindPopup(popupContent.formatted, {
-        offset: new L.Point(0,-options.radius)
+        offset: new L.Point(0,-options.radius),
+        minWidth: "500px"
     });
     
     
