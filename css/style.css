@@ -17,12 +17,16 @@ html,
 body {
     height: 100%;
     margin: 0;
+    background-color: #D7E5D7;
     }
 
     #map {
-    width: 100%;
+    --m: 20px;
+    margin: var(--m);
+    width: calc(80vw - var(--m));
     height: 80%;
-    margin-top: 5px;
+    border-radius: 15px;
+    
     }
     #image-map{
     margin: 20px;
