@@ -1,12 +1,15 @@
 // Add all scripts to the JS folder
 
-var map; 
+var map;
+var imageMap;
 
 var minimalBasemap;
 
 var juxtapose = null;
 var comparisonGroup = null;
 var mainGroup = null;
+
+var popupMap = null;
 
 
 
@@ -20,12 +23,19 @@ function PopupContent(feature){
 
     var link = this.COM_Link;
 
+
     var photoImg;
 
     if(this.Project_Na === "Sheboygan/Segoe Redesign")
         photoImg = '<img src="data/infrastructure_mockups/575_Segoe.png" height="240px" width="400px"/>';
-    else if(this.Project_Na === "Autumn Ridge Path")
-        photoImg = '<img src="data/infrastructure_mockups/575_AutumnRidgeBridge.svg" height="240px" width="400px"/>';
+    else if(this.Project_Na === "Autumn Ridge Path") {
+        // photoImg = '<img src="data/infrastructure_mockups/575_AutumnRidgeBridge.svg" height="240px" width="400px"/>';
+
+
+        photoImg = '<div id="popup-map-autumn" class="popup-map"></div>';
+
+    
+    }
     else
         photoImg = '<p>Image Coming Soon...</p>';
 
@@ -33,16 +43,44 @@ function PopupContent(feature){
 
     this.formatted = "<p><b>Project Name: </b>" + this.properties.Project_Na + 
     "</p><p><a href=\"" + link + "\">City of Madison Link</a></p>" + "</br>"+ photoImg;
+}
 
+function createPopupMap(){
+    console.log("popup map function");
+    if(!popupMap){
+        console.log('creating map');
+
+        popupMap = L.map('popup-map-autumn', { 
+            minZoom: -3, 
+            maxZoom: 2, 
+            center: [0, 0], 
+            zoom: 1, maxBoundsViscosity: 1, 
+            crs: L.CRS.Simple});
+        
+        var image = L.imageOverlay('/data/infrastructure_mockups/575_AutumnRidgeBridge.png', [[0,0],[742,1151]]);
+        image.addTo(popupMap);
+        popupMap.setMaxBounds(new L.LatLngBounds([0,0], [742,1151]));
+    }
+
+    console.log(popupMap);
+
+    return;
 }
 
 
 function createMap(){
 
+    createImageMap(); //create this map first
+
+    
     map = L.map('map').setView([43.07, -89.4], 13);
 
     // set max bounds for the map -- MAY WANT TO ADJUST LATER
     map.setMaxBounds(map.getBounds().pad(2));
+
+    map.on('popupopen', function(e){
+        createPopupMap();
+    })
 
     /* panes for hierarchy testing
     map.createPane('top');
@@ -126,6 +164,7 @@ function callback(data) {
 
     switchMap("mainMap"); // setup main map
 
+    
 };
 
 
@@ -193,17 +232,39 @@ function pointToLayer(feature, latlng){
     
     // create popup content
     var popupContent = new PopupContent(feature);
+
     
     // bind the pop-up to the circle marker 
     layer.bindPopup(popupContent.formatted, {
         offset: new L.Point(0,-options.radius),
         minWidth: "500px"
     });
-    
-    
 
     return layer;
+};
+
+
+function createImageMap() {
+    // Using leaflet.js to pan and zoom a big image.
+    imageMap = L.map('image-map', {
+        minZoom: 1,
+        maxZoom: 2,
+        center: [0, 0],
+        zoom: 1,
+        maxBoundsViscosity: 1,
+        crs: L.CRS.Simple
+        
+        });
+        //zoom 2 full size image is 2302px * 1484px
+        //zoom 1 1151 * 742
     
+        var image= L.imageOverlay("/data/infrastructure_mockups/575_AutumnRidgeBridge.png", [[0,0],[742,1151]]); //initial size at zoom 1 )
+        image.addTo(imageMap);
+        // tell leaflet that the map is exactly as big as the image
+        imageMap.setMaxBounds(new L.LatLngBounds([0,0], [742,1151]));  // prevent panning outside the image area.
+        //Note the viscosity setting keeps the image from being dragged outside this
+
+    return;
 };
 
 
