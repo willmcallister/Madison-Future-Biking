@@ -38,8 +38,13 @@
         Programmed Bike Paths
         -->
 
+        <div id="mapSelectionButton" class="mapSelectionButton"></div>
+        <button class="projectMap" value="projectMap" onclick="switchMap(this.value)">Project Map</button>
+        <button class="comparisonMap" value="comparisonMap" onclick="switchMap(this.value)">Comparison Map</button>
+
+
         <div id="mapSelection" class="mapSelection"></div>
-        <input type="radio" id="mapChoice1" name="mapSelection" value="mainMap" onclick="switchMap(this.value);" checked/>
+        <input type="radio" id="mapChoice1" name="mapSelection" value="projectMap" onclick="switchMap(this.value);" checked/>
         <label for="mapChoice1">Main Map</label>
         <input type="radio" id="mapChoice2" name="mapSelection" value="comparisonMap" onclick="switchMap(this.value);"/>
         <label for="mapChoice2">Comparison Map</label>

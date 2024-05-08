@@ -73,7 +73,7 @@ function createMap(){
 
     createImageMap(); //create this map first
 
-    
+
     map = L.map('map').setView([43.07, -89.4], 13);
 
     // set max bounds for the map -- MAY WANT TO ADJUST LATER
@@ -82,6 +82,22 @@ function createMap(){
     map.on('popupopen', function(e){
         createPopupMap();
     })
+
+
+    // add control placeholders
+    addControlPlaceholders(map);
+
+    // create container for buttons
+    var container = L.DomUtil.create('div', 'mapSelectionButtons');
+
+    // add button at bottom of map
+    addFloatingButton(map,'Project Map',()=>{switchMap("projectMap");},'projectMapBtn', container);
+    addFloatingButton(map,'Comparison Map',()=>{ switchMap("comparisonMap"); },'comparisonMapBtn', container);   
+    
+    // Change the position of the Zoom Control to a newly created placeholder.
+    //map.zoomControl.setPosition('horizontalcenterbottom');
+
+
 
     /* panes for hierarchy testing
     map.createPane('top');
@@ -169,14 +185,14 @@ function callback(data) {
     juxtapose = L.control.sideBySide(leftSide, rightSide);
 
 
-    switchMap("mainMap"); // setup main map
+    switchMap("projectMap"); // setup main map
 
     
 };
 
 
 function switchMap(val) {
-    if(val === "mainMap"){
+    if(val === "projectMap"){
         // switch to main map
         // remove comparison group layer and control
         map.removeLayer(comparisonGroup);
@@ -196,29 +212,6 @@ function switchMap(val) {
     }
 };    
 
-
-/*
-
-// Create an array of the attributes to keep track of their order (for the slider)
-function processData(data){
-    //empty array to hold attributes
-    var attributes = [];
-
-    console.log("processing data");
-
-    //properties of the first feature in the dataset
-    var properties = data.features[0].properties;
-
-    //push each attribute name into attributes array
-    for (var attribute in properties){
-        attributes.push(attribute);
-    };
-
-
-    return attributes;
-};
-
-*/
 
 // Attach pop-ups to each mapped feature
 function pointToLayer(feature, latlng){
@@ -274,6 +267,64 @@ function createImageMap() {
     return;
 };
 
+
+function addFloatingButton(mapObject, textForButton, onClickFunction, elementID, container) {
+    
+    // Create the button element with basic dom manipulation
+    let buttonElement = document.createElement('button');
+
+    // Set the innertext and class of the button
+    buttonElement.innerHTML = textForButton;
+    buttonElement.className = 'leaflet-floating-button';
+    buttonElement.value = elementID.substring(0, elementID.length-3);
+    buttonElement.id = elementID;
+
+
+    //buttonElement.properties = "onclick=switchMap('comparisonMap')";
+
+    
+
+    // Add this leaflet control
+    var buttonControl = L.Control.extend({
+        options: {
+        // if you wish to edit the position of the button, change the position here and also make the corresponding changes in the css attached below
+        position: 'horizontalcenterbottom'
+        },
+
+        onAdd: function () {
+        container.appendChild(buttonElement);
+        return container;
+        }
+    });
+
+    // Add the control to the mapObject
+    mapObject.addControl(new buttonControl());
+
+    // The user defined on click action added to the button
+    buttonElement.onclick = onClickFunction;
+};
+
+
+// Create additional Control placeholders
+function addControlPlaceholders(map) {
+    var corners = map._controlCorners,
+      l = 'leaflet-',
+      container = map._controlContainer;
+
+    function createCorner(hSide, vSide) {
+      var className = l + hSide + ' ' + l + vSide;
+
+      corners[hSide + vSide] = L.DomUtil.create('div', className, container);
+    }
+
+    createCorner('horizontalcenter', 'top');
+    createCorner('horizontalcenter', 'bottom');
+  }
+
+
+  function testFunction() {
+    console.log("test worked");
+  }
 
 
 document.addEventListener('DOMContentLoaded',createMap);
