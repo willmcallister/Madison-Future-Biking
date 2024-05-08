@@ -38,15 +38,46 @@ height: 240px;
 width: 400px;
 }
 
+.mapSelectionButtons {
+    user-select: none;
+    transform: translateX(-50%);
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
 .leaflet-floating-button{
     padding : 10px 20px;
-    background-color : #f0efeb;
-    transform: translateY(-50%);
+    width: 12em;
+    background-color : #CEEFC8;
     color : #000000;
-    border : 1px solid #000;
-    border-radius : 5px;
+    border : 0px solid;
     cursor : pointer;
+    font-weight: bold;
+    font-family:'Segoe UI';
     }
+
+#projectMapBtn{
+    border-radius : 15px 0px 0px 15px;
+}
+
+#comparisonMapBtn{
+    border-radius : 0px 15px 15px 0px;
+}
+
+.leaflet-floating-button:hover {
+        background-color: rgba(0, 0, 0, 0.2);
+
+        /*box-shadow:0px 0px 0px 2px gray inset;*/
+        transition: 0.3s;
+    }
+
+
+.leaflet-floating-button:focus {
+    background-color: #6DC75C;
+    
+}
 
 
 .leaflet-horizontalcenter {

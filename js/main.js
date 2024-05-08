@@ -90,6 +90,9 @@ function createMap(){
     // create container for buttons
     var container = L.DomUtil.create('div', 'mapSelectionButtons');
 
+    //disable any mouse event listeners for the container
+    L.DomEvent.disableClickPropagation(container);
+
     // add button at bottom of map
     addFloatingButton(map,'Project Map',()=>{switchMap("projectMap");},'projectMapBtn', container);
     addFloatingButton(map,'Comparison Map',()=>{ switchMap("comparisonMap"); },'comparisonMapBtn', container);   
