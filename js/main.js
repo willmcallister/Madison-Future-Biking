@@ -189,6 +189,7 @@ function callback(data) {
     // set layers as geojson objects
     var project_locations = L.geoJSON(data[0], { 
         pane: "top",
+        zIndex: 1000,
         pointToLayer: function(feature, latlng){
             return pointToLayer(feature, latlng);
         }
@@ -270,7 +271,7 @@ function switchMap(val) {
 
         // remove comparison group layer and control
         map.removeLayer(comparisonGroup);
-        //map.removeControl(juxtapose);
+        map.removeControl(juxtapose);
 
         // add main map group layer
         map.addLayer(projectGroup);
