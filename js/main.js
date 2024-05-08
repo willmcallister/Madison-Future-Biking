@@ -6,9 +6,11 @@ var imageMap;
 var minimalBasemap;
 var esriWorldImagery;
 
-var juxtapose = null;
-var comparisonGroup = null;
-var mainGroup = null;
+var juxtapose;
+var comparisonGroup;
+var projectGroup;
+
+var juxtaposeCreated = false;
 
 var popupMap = null;
 
@@ -112,30 +114,66 @@ function createMap(){
     map.getPane('bottom').style.zIndex = 340;
     */
 
-    // set basemap
-    minimalBasemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        minZoom: 11
-    }).addTo(map);
-
-    esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-        minZoom: 11,
-        maxZoom: 19
-    })//.addTo(map);
+    /*
+    new L.basemapsSwitcher([
+    {
+        layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            minZoom: 11,
+            label: 'minimal basemap'
+        }).addTo(map), //DEFAULT MAP
+        icon: './assets/images/img1.PNG',
+        name: 'Minimal Base'
+    },
+    {
+        layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            minZoom: 11,
+            maxZoom: 19,
+            label: 'satellite'
+        }),
+        icon: './assets/images/img2.PNG',
+        name: 'Satellite'
+    },
+    ], { position: 'topright' }).addTo(map);
+    */
 
     
+    minimalBasemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            minZoom: 11,
+            label: 'minimal basemap'
+        }).addTo(map);
+
+        esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            minZoom: 11,
+            maxZoom: 19,
+            label: 'satellite'
+        });
+        
+
     // create panes for leaflet sideBySide
     map.createPane("left");
     map.createPane("right");
 
+    map.getPane('left').style.zIndex = 400;
+    map.getPane('right').style.zIndex = 400;
+
+    map.createPane("top");
+    map.getPane('top').style.zIndex = 1000;
+
 
     // fetch local geojson data through promises as json
     var promises = [fetch("data/project_locations.geojson").then(function(r) {return r.json()}),
-                    fetch("data/current_bike_paths.geojson").then(function(r) {return r.json()}), 
-                    fetch("data/programmed_bike_paths.geojson").then(function(r) {return r.json()}),
-                    fetch("data/planned_feasible_bike_paths.geojson").then(function(r) {return r.json()})
+                    fetch("data/bike_paths/existing_bike_paths.geojson").then(function(r) {return r.json()}), 
+                    fetch("data/bike_paths/programmed_bike_paths.geojson").then(function(r) {return r.json()}),
+                    fetch("data/bike_paths/planned_feasible_bike_paths.geojson").then(function(r) {return r.json()}),
+                    fetch("data/bike_paths/planned_obstacles_bike_paths.geojson").then(function(r) {return r.json()}),
+                    fetch("data/bike_paths/conceptual_bike_paths.geojson").then(function(r) {return r.json()}),
+                    fetch("data/bike_paths/platted_bike_paths.geojson").then(function(r) {return r.json()})
                     ];
 
     // run callback function to manipulate json data after data is loaded
@@ -147,46 +185,61 @@ function createMap(){
     
 function callback(data) {
 
-    comparisonGroup = L.layerGroup();
-    mainGroup = L.layerGroup();
-
     // set layers as geojson objects
     var project_locations = L.geoJSON(data[0], { 
+        pane: "top",
         pointToLayer: function(feature, latlng){
             return pointToLayer(feature, latlng);
         }
         }),
-        current_bike_paths = L.geoJSON(data[1], { 
-        pane: "left"
+        existing_bike_paths = L.geoJSON(data[1], { 
+            //pane: "left"
+        }),
+        existing_bike_paths_right = L.geoJSON(data[1], { 
+            pane: "right"
         }),
         programmed_bike_paths = L.geoJSON(data[2], {
-        pane: "right",
-        color: "orange" 
+            pane: "right",
+            color: "orange" 
         }),
         planned_feasible_bike_paths = L.geoJSON(data[3], {
-        color: "yellow"
+            pane: "right",
+            color: "orange"
+        }),
+        planned_obstacles_bike_paths = L.geoJSON(data[4], {
+            pane: "right",
+            color: "orange"
+        }),
+        conceptual_bike_paths = L.geoJSON(data[5], {
+            pane: "right",
+            color: "orange"
+        }),
+        platted_bike_paths = L.geoJSON(data[6], {
+            pane: "right",
+            color: "orange"
         });
 
-    // assign a pane to each layer -- CAUSES ERRORS, NEED TO FIX
-    //current_bike_paths.pane = "left";
-    //programmed_bike_paths.pane = "right";
 
-    // add layers to main map group
-    mainGroup.addLayer(project_locations);
+    // create group layers for each map
+    projectGroup = L.layerGroup()
+        .addLayer(project_locations);
+
+    comparisonGroup = L.layerGroup() // add existing bike paths to left and right panes
+        .addLayer(existing_bike_paths)
+        .addLayer(existing_bike_paths_right);
 
 
-    // assign left and right side for comparison 
-    // (hard coded now, will use user input later)
-    var leftSide = current_bike_paths;
-    var rightSide = programmed_bike_paths;
+    var comparisonLayer = programmed_bike_paths; // selected by user input
 
-    // add layers to compare to comparison group
-    comparisonGroup.addLayer(leftSide);
-    comparisonGroup.addLayer(rightSide);
+    // add layer to compare to comparison group
+    comparisonGroup.addLayer(comparisonLayer); 
+
 
     // add leaflet side by side comparison of two layers to juxtapose control
-    juxtapose = L.control.sideBySide(leftSide, rightSide);
-
+    juxtapose = L.control.sideBySide(existing_bike_paths, comparisonLayer);
+    
+    //juxtapose created
+    juxtaposeCreated = true;
 
     switchMap("projectMap"); // setup main map
 
@@ -196,18 +249,43 @@ function callback(data) {
 
 function switchMap(val) {
     if(val === "projectMap"){
+        // if map already has project group on it, return (no need to run this func)
+        if(map.hasLayer(projectGroup))
+            return;
+        
         // switch to main map
+
+        // move slider all the way to the right (to prevent layer visibility errors)
+        if(juxtaposeCreated){
+            document.getElementsByClassName("leaflet-sbs-divider").style = "left: 456px";
+        }
+
+        // focus project map button
+        document.getElementById("projectMapBtn").style.backgroundColor = '#6DC75C';
+        // unfocus comparison map button
+        document.getElementById("comparisonMapBtn").style.backgroundColor = '#CEEFC8';
+
         // remove comparison group layer and control
         map.removeLayer(comparisonGroup);
         map.removeControl(juxtapose);
 
         // add main map group layer
-        map.addLayer(mainGroup);
+        map.addLayer(projectGroup);
     }
     else {
+        // if map already has comparison group on it, return (no need to run this func)
+        if(map.hasLayer(comparisonGroup))
+            return;
+        
         // switch to comparison map
+
+        // focus comparison map button
+        document.getElementById("comparisonMapBtn").style.backgroundColor = '#6DC75C';
+        // unfocus project map button
+        document.getElementById("projectMapBtn").style.backgroundColor = '#CEEFC8';
+
         // remove main map group layer
-        map.removeLayer(mainGroup);
+        map.removeLayer(projectGroup);
         
         // add comparison group layer and control
         map.addLayer(comparisonGroup);
@@ -221,21 +299,19 @@ function pointToLayer(feature, latlng){
 
     // create marker options
     var options = {
-        radius: 8,
-        color: "#000",
-        weight: 1,
+        radius: 20,
+        fillColor: "#FED85E",
+        color: "#E7C350",
+        weight: 4,
         opacity: 1,
-        fillOpacity: 0.8
+        fillOpacity: 0.8,
     };
-
     
     //create circle marker layer
     var layer = L.circleMarker(latlng, options);
     
-    
     // create popup content
     var popupContent = new PopupContent(feature);
-
     
     // bind the pop-up to the circle marker 
     layer.bindPopup(popupContent.formatted, {
@@ -283,10 +359,6 @@ function addFloatingButton(mapObject, textForButton, onClickFunction, elementID,
     buttonElement.id = elementID;
 
 
-    //buttonElement.properties = "onclick=switchMap('comparisonMap')";
-
-    
-
     // Add this leaflet control
     var buttonControl = L.Control.extend({
         options: {
@@ -322,11 +394,6 @@ function addControlPlaceholders(map) {
 
     createCorner('horizontalcenter', 'top');
     createCorner('horizontalcenter', 'bottom');
-  }
-
-
-  function testFunction() {
-    console.log("test worked");
   }
 
 
