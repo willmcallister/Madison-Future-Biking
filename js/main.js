@@ -11,6 +11,7 @@ var comparisonGroup;
 var projectGroup;
 
 var juxtaposeCreated = false;
+var currentMap;
 
 var popupMap = null;
 
@@ -256,8 +257,10 @@ function switchMap(val) {
         // switch to main map
 
         // move slider all the way to the right (to prevent layer visibility errors)
-        if(juxtaposeCreated){
-            document.getElementsByClassName("leaflet-sbs-divider").style = "left: 456px";
+        if(currentMap === 'compare_map'){
+            //console.log(document.querySelector(".leaflet-sbs-divider"));
+            console.log("moved slider");
+            document.querySelector(".leaflet-sbs-range").value = 1;
         }
 
         // focus project map button
@@ -267,10 +270,12 @@ function switchMap(val) {
 
         // remove comparison group layer and control
         map.removeLayer(comparisonGroup);
-        map.removeControl(juxtapose);
+        //map.removeControl(juxtapose);
 
         // add main map group layer
         map.addLayer(projectGroup);
+
+        currentMap = 'project_map';
     }
     else {
         // if map already has comparison group on it, return (no need to run this func)
@@ -290,6 +295,8 @@ function switchMap(val) {
         // add comparison group layer and control
         map.addLayer(comparisonGroup);
         map.addControl(juxtapose);
+
+        currentMap = 'compare_map';
     }
 };    
 
