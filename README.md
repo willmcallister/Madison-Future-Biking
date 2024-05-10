@@ -1,8 +1,8 @@
-# Geog 575 Final Project (Title TBD)
+# Explore the Future of Biking in Madison!
 
 
 ### Overview
-Broadly, we are interested in combining our joint interest in urban planning with interactive mapping techniques we are learning in Geog 575. We want to create an bike network interactive map for the City of Madison, WI to allow users to view proposed changes to bicycle infrastructure in the city.
+Use our interactive map to view both upcoming changes to the bike network in Madison both at the site level and for the overall network.
 
 ### Team Members
  - Will McAllister
