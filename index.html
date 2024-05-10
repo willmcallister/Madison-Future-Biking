@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="lib/leaflet-side-by-side/range.css">
         <link rel="stylesheet" href="lib/leaflet-side-by-side/layout.css">
         <link rel="stylesheet" href="lib/L.switchBasemap/L.switchBasemap.css">
+        <!--<link rel="stylesheet" href="lib/leaflet-search/leaflet-search.src.css">-->
 
         <link rel="stylesheet" href="css/style.css">
 
@@ -30,14 +31,29 @@
 
     <body>
         <!--put your initial page content here-->
-        <title>575 Final Project</title>
+        <title>Madison Future Biking</title>
+
+        <h1>Explore the Future of Biking in Madison!</h1>
+
+        <div id="intro-paragraph">
+            This interactive map allows you to visualize how select bike infrastructure projects in Madison, WI plan to change current roads layouts, paths, and more. Using engineering drawings produced by the City of Madison and contractors, this map aims to simplify the process of understanding infrastructure projects without spending too much time attempting to understand complex engineering drawings.
+ 
+            <br><br>You can use the project map to see exactly where new bike projects will be. 
+            Click on one of 12 different points of interest on the map to retrieve the details of a site—it will provide you with an image of the new site, 
+            the construction timeline, and links to the City of Madison project page. 
+            The comparison map shows you an overview where current and future bike paths and trails are located. 
+            Use the slider bar to see the before and after and use the dropdown to select different path designations by the City.
+            
+            
+            
+            
+        </div>
 
         <div id="map" class="map"></div>
-
         
-        <h1>Display images using leaflet</h1>
-        <div id="image-map" class="image-map"></div>
-        
+        <div id="attribution">Created as a Final Project for Geography 575 by Will McAllister and Ben Dimenstein.
+            All project mockups were created by Ben Dimenstein and all coding was done by Will McAllister.
+        </div>
 
         <!--you can also use this space for internal scripts;
         place these within <script> tags-->
@@ -46,6 +62,8 @@
         <script type="text/javascript" src="lib/leaflet/leaflet-src.js"></script>
         <script type="text/javascript" src="lib/leaflet-side-by-side/leaflet-side-by-side.js"></script>
         <script type="text/javascript" src="lib/L.switchBasemap/L.switchBasemap.js"></script>
+        <!--<script type="text/javascript" src="lib/leaflet-search/leaflet-search.src.js"></script>-->
+
         <script type="text/javascript" src="js/main.js"></script>
 
     </body>

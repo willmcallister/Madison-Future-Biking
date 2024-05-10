@@ -1,90 +1,93 @@
 // Add all scripts to the JS folder
 
-var map;
-var imageMap;
+(function(){
 
-var minimalBasemap;
-var esriWorldImagery;
+var map;
+
 
 var juxtapose;
 var comparisonGroup;
 var projectGroup;
 
-var juxtaposeCreated = false;
+var existingPaths;
+var exisitingPathsRight;
+var bikeComparisonLayers;
+
+var comparedLayer = null;
+
 var currentMap;
 
-var popupMap = null;
 
+var pathStatus = ["Platted for Construction", "Programmed - Funded",
+    "Planned - Feasible", "Planned - Obstacles", "Conceptual"];
 
 
 // PopupContent constructor function
 function PopupContent(feature){
     this.properties = feature.properties;
 
-    this.Project_Na = this.properties.Project_Na
-    this.COM_Link = this.properties.COM_Link;
-    this.Engineerin = this.properties.Engineerin;
-
-    var link = this.COM_Link;
-
-
-    var photoImg;
-
-    if(this.Project_Na === "Sheboygan/Segoe Redesign")
-        photoImg = '<img src="data/infrastructure_mockups/575_Segoe.png" height="240px" width="400px"/>';
-    else if(this.Project_Na === "Autumn Ridge Path") {
-        // photoImg = '<img src="data/infrastructure_mockups/575_AutumnRidgeBridge.svg" height="240px" width="400px"/>';
+    this.prj_name = this.properties.prj_name
+    this.com_web = this.properties.com_web;
+    this.eng_draw = this.properties.eng_draw;
+    this.prj_displa = this.properties.prj_displa;
+    this.prj_stat = this.properties.prj_stat;
 
 
-        photoImg = '<div id="popup-map-autumn" class="popup-map"></div>';
 
-    
+    var overlayPhoto;
+
+    var name = this.prj_name;
+    switch(name){
+        case 'segoe_rd_sheobygan_ave_reconstruction':
+            overlayPhoto = 'Segoe.png';
+            break;
+        case 'tancho_drive_bike_path':
+            overlayPhoto = 'tancho151.png';
+            break;
+        case 'davies_street_and_dempsey_road_reconstruction':
+            overlayPhoto = 'dempsey_upclose.png';
+            break;
+        case 'atwood_avenue_reconstruction':
+            overlayPhoto = 'atwood.png';
+            break;
+        case 'lakeside_cycletrack_connection':
+            overlayPhoto = 'lakesidegilson.png';
+            break;
+        case 'uw_arboretum_mccaffrey_bike_entrance':
+            overlayPhoto = 'uwarbseminole.png';
+            break;
+        case 'west_towne_path_phase_3':
+            overlayPhoto = 'westtowne.png';
+            break;
+        case 'hammersley_road_resurfacing_phase_1':
+            overlayPhoto = 'hammersley_phase2.png';
+            break;
+        case 'cannonball_path_phase_6':
+            overlayPhoto = 'cannonballph6.png';
+            break;
+        case 'autumn_ridge_bridge':
+            overlayPhoto = 'AutumnRidgeBridge.png';
+            break;
+        case 'autumn_ridge_path':
+            overlayPhoto = 'AutumnRidgePath.png';
+            break;
     }
-    else
-        photoImg = '<p>Image Coming Soon...</p>';
 
-        
 
-    this.formatted = "<p><b>Project Name: </b>" + this.properties.Project_Na + 
-    "</p><p><a href=\"" + link + "\">City of Madison Link</a></p>" + "</br>"+ photoImg;
+    var photoImg = `<img src="data/infrastructure_mockups/${overlayPhoto}"` + '" height="240px" width="400px"/>';
+
+    this.formatted = "<p><b>Project Name: </b>" + this.properties.prj_displa + 
+    "</p><p>" + this.properties.com_web + "</p><p>" + this.properties.eng_draw + 
+    "</p><p>Project Status: " + this.properties.prj_stat + "</p></br>" + photoImg;
 }
 
-function createPopupMap(){
-    console.log("popup map function");
-    if(!popupMap){
-        console.log('creating map');
-
-        popupMap = L.map('popup-map-autumn', { 
-            minZoom: -3, 
-            maxZoom: 2, 
-            center: [0, 0], 
-            zoom: 1, maxBoundsViscosity: 1, 
-            crs: L.CRS.Simple});
-        
-        var image = L.imageOverlay('/data/infrastructure_mockups/575_AutumnRidgeBridge.png', [[0,0],[742,1151]]);
-        image.addTo(popupMap);
-        popupMap.setMaxBounds(new L.LatLngBounds([0,0], [742,1151]));
-    }
-
-    console.log(popupMap);
-
-    return;
-}
 
 
 function createMap(){
-
-    createImageMap(); //create this map first
-
-
-    map = L.map('map').setView([43.07, -89.4], 13);
+    map = L.map('map').setView([43.08, -89.39], 12);
 
     // set max bounds for the map -- MAY WANT TO ADJUST LATER
     map.setMaxBounds(map.getBounds().pad(2));
-
-    map.on('popupopen', function(e){
-        createPopupMap();
-    })
 
 
     // add control placeholders
@@ -98,24 +101,17 @@ function createMap(){
 
     // add button at bottom of map
     addFloatingButton(map,'Project Map',()=>{switchMap("projectMap");},'projectMapBtn', container);
-    addFloatingButton(map,'Comparison Map',()=>{ switchMap("comparisonMap"); },'comparisonMapBtn', container);   
+    addFloatingButton(map,'Comparison Map',()=>{ switchMap("comparisonMap"); },'comparisonMapBtn', container);
+
+
+    // create dropdown for comparison layer choice
+    addDropdown();
+
+
+    //create legend for comparison layer
+    createLegend();
+
     
-    // Change the position of the Zoom Control to a newly created placeholder.
-    //map.zoomControl.setPosition('horizontalcenterbottom');
-
-
-
-    /* panes for hierarchy testing
-    map.createPane('top');
-    map.createPane('middle');
-    map.createPane('bottom');
-
-    map.getPane('top').style.zIndex = 380;
-    map.getPane('middle').style.zIndex = 360;
-    map.getPane('bottom').style.zIndex = 340;
-    */
-
-    /*
     new L.basemapsSwitcher([
     {
         layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -124,7 +120,7 @@ function createMap(){
             minZoom: 11,
             label: 'minimal basemap'
         }).addTo(map), //DEFAULT MAP
-        icon: './assets/images/img1.PNG',
+        //icon: './assets/images/img1.PNG',
         name: 'Minimal Base'
     },
     {
@@ -134,27 +130,11 @@ function createMap(){
             maxZoom: 19,
             label: 'satellite'
         }),
-        icon: './assets/images/img2.PNG',
+        //icon: './assets/images/img2.PNG',
         name: 'Satellite'
     },
     ], { position: 'topright' }).addTo(map);
-    */
-
     
-    minimalBasemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            minZoom: 11,
-            label: 'minimal basemap'
-        }).addTo(map);
-
-        esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-            minZoom: 11,
-            maxZoom: 19,
-            label: 'satellite'
-        });
-        
 
     // create panes for leaflet sideBySide
     map.createPane("left");
@@ -168,7 +148,7 @@ function createMap(){
 
 
     // fetch local geojson data through promises as json
-    var promises = [fetch("data/project_locations.geojson").then(function(r) {return r.json()}),
+    var promises = [fetch("data/projects/project_locations.geojson").then(function(r) {return r.json()}),
                     fetch("data/bike_paths/existing_bike_paths.geojson").then(function(r) {return r.json()}), 
                     fetch("data/bike_paths/programmed_bike_paths.geojson").then(function(r) {return r.json()}),
                     fetch("data/bike_paths/planned_feasible_bike_paths.geojson").then(function(r) {return r.json()}),
@@ -195,11 +175,14 @@ function callback(data) {
         }
         }),
         existing_bike_paths = L.geoJSON(data[1], { 
-            //pane: "left"
+            color: "#5B7C99",
+            weight: 1.7
         }),
         existing_bike_paths_right = L.geoJSON(data[1], { 
-            pane: "right"
-        }),
+            pane: "right",
+            color: "#5B7C99",
+            weight: 1.7
+        })
         programmed_bike_paths = L.geoJSON(data[2], {
             pane: "right",
             color: "orange" 
@@ -222,31 +205,57 @@ function callback(data) {
         });
 
 
+    existingPaths = existing_bike_paths;
+    existingPathsRight = existing_bike_paths_right;
+
+    bikeComparisonLayers = [platted_bike_paths, programmed_bike_paths, planned_feasible_bike_paths,
+        planned_obstacles_bike_paths, conceptual_bike_paths];
+    
+
     // create group layers for each map
     projectGroup = L.layerGroup()
         .addLayer(project_locations);
 
+    
     comparisonGroup = L.layerGroup() // add existing bike paths to left and right panes
         .addLayer(existing_bike_paths)
         .addLayer(existing_bike_paths_right);
-
-
-    var comparisonLayer = programmed_bike_paths; // selected by user input
-
-    // add layer to compare to comparison group
-    comparisonGroup.addLayer(comparisonLayer); 
-
-
-    // add leaflet side by side comparison of two layers to juxtapose control
-    juxtapose = L.control.sideBySide(existing_bike_paths, comparisonLayer);
     
-    //juxtapose created
-    juxtaposeCreated = true;
+
+    changeBikeLayer(bikeComparisonLayers[0]); // setup juxtapose with first comparison layer
 
     switchMap("projectMap"); // setup main map
 
-    
 };
+
+
+function changeBikeLayer(inputLayer) {
+    oldLayer = comparedLayer;
+    
+    // remove old layer from comparison group
+    if(oldLayer){
+        console.log("removing juxtapose");
+        comparisonGroup.removeLayer(oldLayer);
+        map.removeControl(juxtapose);
+        juxtapose = null;
+    }
+    // add layer to compare to comparison group
+    comparisonGroup.addLayer(inputLayer); 
+
+    comparedLayer = inputLayer; // store which layer is currently being compared
+
+    console.log("left comparison: " + existingPaths);
+    console.log("right comparison: " + inputLayer);
+    // add leaflet side by side comparison of two layers to juxtapose control
+    juxtapose = L.control.sideBySide(existingPaths, inputLayer);
+
+    if(oldLayer){
+        console.log("adding new juxtapose");
+        map.addControl(juxtapose);
+    }
+
+    return;
+}
 
 
 function switchMap(val) {
@@ -263,6 +272,9 @@ function switchMap(val) {
             console.log("moved slider");
             document.querySelector(".leaflet-sbs-range").value = 1;
         }
+
+        // hide bike layer dropdown and legend
+        toggleBikeElements();
 
         // focus project map button
         document.getElementById("projectMapBtn").style.backgroundColor = '#6DC75C';
@@ -285,6 +297,9 @@ function switchMap(val) {
         
         // switch to comparison map
 
+        //show map dropdown and legend
+        toggleBikeElements();
+
         // focus comparison map button
         document.getElementById("comparisonMapBtn").style.backgroundColor = '#6DC75C';
         // unfocus project map button
@@ -304,6 +319,8 @@ function switchMap(val) {
 
 // Attach pop-ups to each mapped feature
 function pointToLayer(feature, latlng){
+
+    console.log("ran");
 
     // create marker options
     var options = {
@@ -331,27 +348,67 @@ function pointToLayer(feature, latlng){
 };
 
 
-function createImageMap() {
-    // Using leaflet.js to pan and zoom a big image.
-    imageMap = L.map('image-map', {
-        minZoom: 1,
-        maxZoom: 2,
-        center: [0, 0],
-        zoom: 1,
-        maxBoundsViscosity: 1,
-        crs: L.CRS.Simple
-        
-        });
-        //zoom 2 full size image is 2302px * 1484px
-        //zoom 1 1151 * 742
-    
-        var image= L.imageOverlay("/data/infrastructure_mockups/575_AutumnRidgeBridge.png", [[0,0],[742,1151]]); //initial size at zoom 1 )
-        image.addTo(imageMap);
-        // tell leaflet that the map is exactly as big as the image
-        imageMap.setMaxBounds(new L.LatLngBounds([0,0], [742,1151]));  // prevent panning outside the image area.
-        //Note the viscosity setting keeps the image from being dragged outside this
+function addDropdown(){
+    // create container for buttons
+    var container = L.DomUtil.create('div', 'comparisonDropdown');
+    container.innerHTML = "Select Bike Layer to Compare<br>";
+    container.id = "bike-dropdown-div";
 
-    return;
+    //disable any mouse event listeners for the container
+    L.DomEvent.disableClickPropagation(container);
+    
+
+    // array of options to be added -- pathStatus
+
+    //Create dropdown
+    var dropdownElement = document.createElement('select');
+    dropdownElement.className = 'bike-dropdown';
+    dropdownElement.id = "bike-dropdown";
+    dropdownElement.onchange = function(){changeBikeLayer(bikeComparisonLayers[pathStatus.indexOf(this.value)]);};
+
+
+    //Create and append the options
+    for (var i = 0; i < pathStatus.length; i++) {
+        var option = document.createElement("option");
+        option.value = pathStatus[i];
+        option.text = pathStatus[i];
+        dropdownElement.appendChild(option);
+    }
+
+
+    // Add this leaflet control
+    var dropdownControl = L.Control.extend({
+        options: {
+        // if you wish to edit the position of the button, change the position here and also make the corresponding changes in the css attached below
+        position: 'horizontalcentertop'
+        },
+
+        onAdd: function () {
+        container.appendChild(dropdownElement);
+        return container;
+        }
+    });
+
+    // Add the control to the mapObject
+    map.addControl(new dropdownControl());
+};
+
+
+function toggleBikeElements(){
+    var dropdown = document.getElementById("bike-dropdown-div");
+    if (dropdown.style.display === "none") {
+        dropdown.style.display = "block";
+    } else {
+        dropdown.style.display = "none";
+    }
+    
+    var legend = document.getElementById("bike-legend-div");
+    if (legend.style.display === "none") {
+        legend.style.display = "block";
+    } else {
+        legend.style.display = "none";
+    }
+    
 };
 
 
@@ -370,7 +427,7 @@ function addFloatingButton(mapObject, textForButton, onClickFunction, elementID,
     // Add this leaflet control
     var buttonControl = L.Control.extend({
         options: {
-        // if you wish to edit the position of the button, change the position here and also make the corresponding changes in the css attached below
+        // position button - uses css
         position: 'horizontalcenterbottom'
         },
 
@@ -385,6 +442,48 @@ function addFloatingButton(mapObject, textForButton, onClickFunction, elementID,
 
     // The user defined on click action added to the button
     buttonElement.onclick = onClickFunction;
+};
+
+
+function createLegend(){    
+    var LegendControl = L.Control.extend({
+        options: {
+            position: 'bottomright'
+        },
+
+        onAdd: function () {
+            // create the control container with a particular class name
+            var container = L.DomUtil.create('div', 'legend-control-container');
+
+            container.innerHTML = '<p class="bike-legend"><b>Bike Path Status</b></p>';
+            container.id = "bike-legend-div";
+            
+            // Add an <svg> element to the legend for existing bike routes
+            var svg1 = '<svg id="attribute-legend-existing" class="legend-svgs" width="160px" height="20px">';
+            svg1 += '<line x1="0" y1="10" x2="25" y2="10" style="stroke:#5B7C99;stroke-width:12" />';
+            //text string            
+            svg1 += '<text id="existing-path-text" x="35" y="' + 15 + '">'
+            + "Existing Bike Paths" + '</text>';
+            svg1 += '</svg>';
+
+            // Add an <svg> element to the legend for selected bike routes
+            var svg2 = '<svg id="attribute-legend-selected" class="legend-svgs" width="160px" height="20px">';
+            svg2 += '<line x1="0" y1="10" x2="25" y2="10" style="stroke:orange;stroke-width:12" />';
+            //text string            
+            svg2 += '<text id="selected-path-text" x="35" y="' + 15 + '">'
+            + "Selected Bike Paths" + '</text>';
+            svg2 += '</svg>';
+
+
+            // add legend svgs to container
+            container.insertAdjacentHTML('beforeend',svg1);
+            container.insertAdjacentHTML('beforeend',svg2);
+
+            return container;
+        }
+    });
+    
+    map.addControl(new LegendControl());
 };
 
 
@@ -404,5 +503,6 @@ function addControlPlaceholders(map) {
     createCorner('horizontalcenter', 'bottom');
   }
 
-
 document.addEventListener('DOMContentLoaded',createMap);
+
+})();

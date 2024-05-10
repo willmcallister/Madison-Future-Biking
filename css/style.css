@@ -20,11 +20,31 @@ body {
     background-color: #D7E5D7;
     }
 
+h1 {
+    font-family:'Segoe UI';
+    padding-left: 20px;
+}
+
+#intro-paragraph {
+    font-family:'Segoe UI';
+    padding-left: 20px;
+    padding-right: 40px;
+    padding-bottom: 20px;
+}
+
+#attribution {
+    font-family:'Segoe UI';
+    font-style: italic;
+    font-size: smaller;
+    padding-left: 20px;
+    padding-bottom: 10px;
+}
+
 #map {
---m: 20px;
+--m: 10px;
 margin: var(--m);
-width: calc(80vw - var(--m));
-height: 80%;
+width: calc(100vw - (var(--m) * 2));
+height: calc(100vh - (var(--m) * 2));
 border-radius: 15px;
 
 }
@@ -59,6 +79,55 @@ width: 400px;
     font-family:'Segoe UI';
 }
 
+.comparisonDropdown {
+    transform: translateX(-50%);
+    background-color: #fff;
+    font-weight: bold;
+    font-family:'Segoe UI';
+    padding: 5px 20px 5px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    line-height: 200%;
+    user-select: none;
+}
+
+
+#bike-dropdown {
+    pointer-events: auto;
+    font-family:'Segoe UI';
+    padding: 2px;
+}
+
+.legend-control-container {
+    width: 170px;
+    height: auto;
+
+    line-height: 20px;
+    text-align: center;
+
+    background-color: rgba(255,255,255,0.8);
+    font-weight: bold;
+    font-family:'Segoe UI';
+    padding: 5px 20px 5px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    user-select: none;
+
+}
+
+.bike-legend {
+    width: auto;
+    margin: 0px, 5px, 5px, 10px;
+    font-family:'Segoe UI';
+}
+
+.legend-svgs {
+    margin: 10px, 5px, 10px, 10px;
+}
+
+
+
+
 #projectMapBtn{
     border-radius : 15px 0px 0px 15px;
 }
@@ -72,16 +141,29 @@ width: 400px;
     transition: 0.2s;
 }
 
-
 .leaflet-horizontalcenter {
     position: absolute;
     z-index: 1000;
     pointer-events: none;
     left: 50%;
-    padding-top: 10px;
+    padding-top: 0px;
 }
     
 .leaflet-horizontalcenter .leaflet-control {
     margin-bottom: 20px;
+}
+
+
+.dropdown {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    z-index: 1000;
+    font-family: sans-serif;
+    font-size: 1em;
+    font-weight: bold;
+    padding: 2px;
+    border: 1px solid #999;
+    box-shadow: 2px 2px 4px #999;
 }
 
