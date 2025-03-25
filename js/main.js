@@ -89,7 +89,6 @@ function createMap(){
     // set max bounds for the map -- MAY WANT TO ADJUST LATER
     map.setMaxBounds(map.getBounds().pad(2));
 
-
     // add control placeholders
     addControlPlaceholders(map);
 
@@ -103,10 +102,11 @@ function createMap(){
     addFloatingButton(map,'Project Map',()=>{switchMap("projectMap");},'projectMapBtn', container);
     addFloatingButton(map,'Comparison Map',()=>{ switchMap("comparisonMap"); },'comparisonMapBtn', container);
 
+    // toggle project map button to be selected
+    document.getElementById("projectMapBtn").classList.toggle('selected');
 
     // create dropdown for comparison layer choice
     addDropdown();
-
 
     //create legend for comparison layer
     createLegend();
@@ -224,7 +224,7 @@ function callback(data) {
 
     changeBikeLayer(bikeComparisonLayers[0]); // setup juxtapose with first comparison layer
 
-    switchMap("projectMap"); // setup main map
+    switchMap("projectMap", true); // setup main map (passing in true to denote first run)
 
 };
 
@@ -258,7 +258,7 @@ function changeBikeLayer(inputLayer) {
 }
 
 
-function switchMap(val) {
+function switchMap(val, firstRun = false) {
     if(val === "projectMap"){
         // if map already has project group on it, return (no need to run this func)
         if(map.hasLayer(projectGroup))
@@ -269,18 +269,21 @@ function switchMap(val) {
         // move slider all the way to the right (to prevent layer visibility errors)
         if(currentMap === 'compare_map'){
             //console.log(document.querySelector(".leaflet-sbs-divider"));
-            console.log("moved slider");
             document.querySelector(".leaflet-sbs-range").value = 1;
         }
 
         // hide bike layer dropdown and legend
         toggleBikeElements();
 
-        // focus project map button
-        document.getElementById("projectMapBtn").style.backgroundColor = '#6DC75C';
-        // unfocus comparison map button
-        document.getElementById("comparisonMapBtn").style.backgroundColor = '#CEEFC8';
+        // -- Hack for now to stop wrong button from being selected, FIX LATER! --
+        if(!firstRun) {
+            console.log("selecting project map")
+            // focus project map button
+            document.getElementById("projectMapBtn").classList.toggle('selected');
 
+            // unfocus comparison map button
+            document.getElementById("comparisonMapBtn").classList.toggle('selected');
+        }
         // remove comparison group layer and control
         map.removeLayer(comparisonGroup);
         map.removeControl(juxtapose);
@@ -300,10 +303,13 @@ function switchMap(val) {
         //show map dropdown and legend
         toggleBikeElements();
 
-        // focus comparison map button
-        document.getElementById("comparisonMapBtn").style.backgroundColor = '#6DC75C';
-        // unfocus project map button
-        document.getElementById("projectMapBtn").style.backgroundColor = '#CEEFC8';
+        if(!firstRun) {
+            // unfocus project map button
+            document.getElementById("projectMapBtn").classList.toggle('selected');
+
+            // focus comparison map button
+            document.getElementById("comparisonMapBtn").classList.toggle('selected');
+        }
 
         // remove main map group layer
         map.removeLayer(projectGroup);
@@ -402,7 +408,7 @@ function toggleBikeElements(){
         dropdown.style.display = "none";
     }
     
-    var legend = document.getElementById("bike-legend-div");
+    var legend = document.getElementById("bike-legend");
     if (legend.style.display === "none") {
         legend.style.display = "block";
     } else {
@@ -455,8 +461,8 @@ function createLegend(){
             // create the control container with a particular class name
             var container = L.DomUtil.create('div', 'legend-control-container');
 
-            container.innerHTML = '<p class="bike-legend"><b>Bike Path Status</b></p>';
-            container.id = "bike-legend-div";
+            container.innerHTML = '<p class="legend-title">Bike Path Status</p>';
+            container.id = "bike-legend";
             
             // Add an <svg> element to the legend for existing bike routes
             var svg1 = '<svg id="attribute-legend-existing" class="legend-svgs" width="160px" height="20px">';
@@ -464,7 +470,7 @@ function createLegend(){
             //text string            
             svg1 += '<text id="existing-path-text" x="35" y="' + 15 + '">'
             + "Existing Bike Paths" + '</text>';
-            svg1 += '</svg>';
+            svg1 += '</svg><br>'; // add line break before next element
 
             // Add an <svg> element to the legend for selected bike routes
             var svg2 = '<svg id="attribute-legend-selected" class="legend-svgs" width="160px" height="20px">';
