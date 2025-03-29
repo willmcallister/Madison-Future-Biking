@@ -59,6 +59,7 @@ h1 {
 
 /* div for map selection buttons at bottom center of map */
 .mapSelectionButtons {
+    width: calc((11rem) * 2);
     user-select: none;
     transform: translateX(-50%);
     background-color: #fff;
@@ -69,7 +70,7 @@ h1 {
 
 .leaflet-floating-button{
     padding : 10px 20px;
-    width: 12em;
+    width: 11rem;
     background-color: #E4F1EB;
     color: #577C6E;
     border : 0px solid;

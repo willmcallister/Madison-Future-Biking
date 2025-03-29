@@ -2,25 +2,13 @@
 
 (function(){
 
-var map;
-
-
-var juxtapose;
-var comparisonGroup;
-var projectGroup;
-
-var existingPaths;
-var exisitingPathsRight;
-var bikeComparisonLayers;
-
-var comparedLayer = null;
-
-var currentMap;
-
-
-var pathStatus = ["Platted for Construction", "Programmed - Funded",
+let map;
+let juxtapose, comparisonGroup, projectGroup;
+let existingPaths, bikeComparisonLayers;
+let comparedLayer = null;
+let currentMap;
+let pathStatus = ["Platted for Construction", "Programmed - Funded",
     "Planned - Feasible", "Planned - Obstacles", "Conceptual"];
-
 
 // PopupContent constructor function
 function PopupContent(feature){
@@ -31,56 +19,15 @@ function PopupContent(feature){
     this.eng_draw = this.properties.eng_draw;
     this.prj_displa = this.properties.prj_displa;
     this.prj_stat = this.properties.prj_stat;
+    this.img_src = this.properties.img_src;
 
-
-
-    var overlayPhoto;
-
-    var name = this.prj_name;
-    switch(name){
-        case 'segoe_rd_sheobygan_ave_reconstruction':
-            overlayPhoto = 'Segoe.png';
-            break;
-        case 'tancho_drive_bike_path':
-            overlayPhoto = 'tancho151.png';
-            break;
-        case 'davies_street_and_dempsey_road_reconstruction':
-            overlayPhoto = 'dempsey_upclose.png';
-            break;
-        case 'atwood_avenue_reconstruction':
-            overlayPhoto = 'atwood.png';
-            break;
-        case 'lakeside_cycletrack_connection':
-            overlayPhoto = 'lakesidegilson.png';
-            break;
-        case 'uw_arboretum_mccaffrey_bike_entrance':
-            overlayPhoto = 'uwarbseminole.png';
-            break;
-        case 'west_towne_path_phase_3':
-            overlayPhoto = 'westtowne.png';
-            break;
-        case 'hammersley_road_resurfacing_phase_1':
-            overlayPhoto = 'hammersley_phase2.png';
-            break;
-        case 'cannonball_path_phase_6':
-            overlayPhoto = 'cannonballph6.png';
-            break;
-        case 'autumn_ridge_bridge':
-            overlayPhoto = 'AutumnRidgeBridge.png';
-            break;
-        case 'autumn_ridge_path':
-            overlayPhoto = 'AutumnRidgePath.png';
-            break;
-    }
-
-
-    var photoImg = `<img src="data/infrastructure_mockups/${overlayPhoto}"` + '" height="240px" width="400px"/>';
+    let photoImg = `<img src="data/infrastructure_mockups/${this.img_src}"` 
+        + '" height="240px" width="400px"/>';
 
     this.formatted = "<p><b>Project Name: </b>" + this.properties.prj_displa + 
     "</p><p>" + this.properties.com_web + "</p><p>" + this.properties.eng_draw + 
     "</p><p>Project Status: " + this.properties.prj_stat + "</p></br>" + photoImg;
 }
-
 
 
 function createMap(){
@@ -93,7 +40,7 @@ function createMap(){
     addControlPlaceholders(map);
 
     // create container for buttons
-    var container = L.DomUtil.create('div', 'mapSelectionButtons');
+    const container = L.DomUtil.create('div', 'mapSelectionButtons');
 
     //disable any mouse event listeners for the container
     L.DomEvent.disableClickPropagation(container);
@@ -110,7 +57,6 @@ function createMap(){
 
     //create legend for comparison layer
     createLegend();
-
     
     new L.basemapsSwitcher([
     {
@@ -148,7 +94,7 @@ function createMap(){
 
 
     // fetch local geojson data through promises as json
-    var promises = [fetch("data/projects/project_locations.geojson").then(function(r) {return r.json()}),
+    const promises = [fetch("data/projects/project_locations.geojson").then(function(r) {return r.json()}),
                     fetch("data/bike_paths/existing_bike_paths.geojson").then(function(r) {return r.json()}), 
                     fetch("data/bike_paths/programmed_bike_paths.geojson").then(function(r) {return r.json()}),
                     fetch("data/bike_paths/planned_feasible_bike_paths.geojson").then(function(r) {return r.json()}),
@@ -159,15 +105,13 @@ function createMap(){
 
     // run callback function to manipulate json data after data is loaded
     Promise.all(promises).then(callback); 
-
-
 };
 
     
 function callback(data) {
 
     // set layers as geojson objects
-    var project_locations = L.geoJSON(data[0], { 
+    let project_locations = L.geoJSON(data[0], { 
         pane: "top",
         zIndex: 1000,
         pointToLayer: function(feature, latlng){
@@ -206,7 +150,6 @@ function callback(data) {
 
 
     existingPaths = existing_bike_paths;
-    existingPathsRight = existing_bike_paths_right;
 
     bikeComparisonLayers = [platted_bike_paths, programmed_bike_paths, planned_feasible_bike_paths,
         planned_obstacles_bike_paths, conceptual_bike_paths];
@@ -234,7 +177,6 @@ function changeBikeLayer(inputLayer) {
     
     // remove old layer from comparison group
     if(oldLayer){
-        console.log("removing juxtapose");
         comparisonGroup.removeLayer(oldLayer);
         map.removeControl(juxtapose);
         juxtapose = null;
@@ -244,13 +186,10 @@ function changeBikeLayer(inputLayer) {
 
     comparedLayer = inputLayer; // store which layer is currently being compared
 
-    console.log("left comparison: " + existingPaths);
-    console.log("right comparison: " + inputLayer);
     // add leaflet side by side comparison of two layers to juxtapose control
     juxtapose = L.control.sideBySide(existingPaths, inputLayer);
 
     if(oldLayer){
-        console.log("adding new juxtapose");
         map.addControl(juxtapose);
     }
 
@@ -268,7 +207,6 @@ function switchMap(val, firstRun = false) {
 
         // move slider all the way to the right (to prevent layer visibility errors)
         if(currentMap === 'compare_map'){
-            //console.log(document.querySelector(".leaflet-sbs-divider"));
             document.querySelector(".leaflet-sbs-range").value = 1;
         }
 
@@ -277,7 +215,6 @@ function switchMap(val, firstRun = false) {
 
         // -- Hack for now to stop wrong button from being selected, FIX LATER! --
         if(!firstRun) {
-            console.log("selecting project map")
             // focus project map button
             document.getElementById("projectMapBtn").classList.toggle('selected');
 
@@ -325,11 +262,8 @@ function switchMap(val, firstRun = false) {
 
 // Attach pop-ups to each mapped feature
 function pointToLayer(feature, latlng){
-
-    console.log("ran");
-
     // create marker options
-    var options = {
+    const options = {
         radius: 20,
         fillColor: "#FED85E",
         color: "#E7C350",
@@ -339,10 +273,10 @@ function pointToLayer(feature, latlng){
     };
     
     //create circle marker layer
-    var layer = L.circleMarker(latlng, options);
+    const layer = L.circleMarker(latlng, options);
     
     // create popup content
-    var popupContent = new PopupContent(feature);
+    const popupContent = new PopupContent(feature);
     
     // bind the pop-up to the circle marker 
     layer.bindPopup(popupContent.formatted, {
@@ -356,8 +290,8 @@ function pointToLayer(feature, latlng){
 
 function addDropdown(){
     // create container for buttons
-    var container = L.DomUtil.create('div', 'comparisonDropdown');
-    container.innerHTML = "Select Bike Layer to Compare<br>";
+    const container = L.DomUtil.create('div', 'comparisonDropdown');
+    container.innerText = "Select Bike Layer to Compare";
     container.id = "bike-dropdown-div";
 
     //disable any mouse event listeners for the container
@@ -367,15 +301,15 @@ function addDropdown(){
     // array of options to be added -- pathStatus
 
     //Create dropdown
-    var dropdownElement = document.createElement('select');
+    const dropdownElement = document.createElement('select');
     dropdownElement.className = 'bike-dropdown';
     dropdownElement.id = "bike-dropdown";
     dropdownElement.onchange = function(){changeBikeLayer(bikeComparisonLayers[pathStatus.indexOf(this.value)]);};
 
 
     //Create and append the options
-    for (var i = 0; i < pathStatus.length; i++) {
-        var option = document.createElement("option");
+    for (let i = 0; i < pathStatus.length; i++) {
+        const option = document.createElement("option");
         option.value = pathStatus[i];
         option.text = pathStatus[i];
         dropdownElement.appendChild(option);
@@ -383,7 +317,7 @@ function addDropdown(){
 
 
     // Add this leaflet control
-    var dropdownControl = L.Control.extend({
+    const dropdownControl = L.Control.extend({
         options: {
         // if you wish to edit the position of the button, change the position here and also make the corresponding changes in the css attached below
         position: 'horizontalcentertop'
@@ -401,14 +335,14 @@ function addDropdown(){
 
 
 function toggleBikeElements(){
-    var dropdown = document.getElementById("bike-dropdown-div");
+    const dropdown = document.getElementById("bike-dropdown-div");
     if (dropdown.style.display === "none") {
         dropdown.style.display = "block";
     } else {
         dropdown.style.display = "none";
     }
     
-    var legend = document.getElementById("bike-legend");
+    const legend = document.getElementById("bike-legend");
     if (legend.style.display === "none") {
         legend.style.display = "block";
     } else {
@@ -421,17 +355,17 @@ function toggleBikeElements(){
 function addFloatingButton(mapObject, textForButton, onClickFunction, elementID, container) {
     
     // Create the button element with basic dom manipulation
-    let buttonElement = document.createElement('button');
+    const buttonElement = document.createElement('button');
 
     // Set the innertext and class of the button
-    buttonElement.innerHTML = textForButton;
+    buttonElement.innerText = textForButton;
     buttonElement.className = 'leaflet-floating-button';
     buttonElement.value = elementID.substring(0, elementID.length-3);
     buttonElement.id = elementID;
 
 
     // Add this leaflet control
-    var buttonControl = L.Control.extend({
+    const buttonControl = L.Control.extend({
         options: {
         // position button - uses css
         position: 'horizontalcenterbottom'
@@ -452,20 +386,20 @@ function addFloatingButton(mapObject, textForButton, onClickFunction, elementID,
 
 
 function createLegend(){    
-    var LegendControl = L.Control.extend({
+    const LegendControl = L.Control.extend({
         options: {
             position: 'bottomright'
         },
 
         onAdd: function () {
             // create the control container with a particular class name
-            var container = L.DomUtil.create('div', 'legend-control-container');
+            const container = L.DomUtil.create('div', 'legend-control-container');
 
             container.innerHTML = '<p class="legend-title">Bike Path Status</p>';
             container.id = "bike-legend";
             
             // Add an <svg> element to the legend for existing bike routes
-            var svg1 = '<svg id="attribute-legend-existing" class="legend-svgs" width="160px" height="20px">';
+            let svg1 = '<svg id="attribute-legend-existing" class="legend-svgs" width="160px" height="20px">';
             svg1 += '<line x1="0" y1="10" x2="25" y2="10" style="stroke:#5B7C99;stroke-width:12" />';
             //text string            
             svg1 += '<text id="existing-path-text" x="35" y="' + 15 + '">'
@@ -473,7 +407,7 @@ function createLegend(){
             svg1 += '</svg><br>'; // add line break before next element
 
             // Add an <svg> element to the legend for selected bike routes
-            var svg2 = '<svg id="attribute-legend-selected" class="legend-svgs" width="160px" height="20px">';
+            let svg2 = '<svg id="attribute-legend-selected" class="legend-svgs" width="160px" height="20px">';
             svg2 += '<line x1="0" y1="10" x2="25" y2="10" style="stroke:orange;stroke-width:12" />';
             //text string            
             svg2 += '<text id="selected-path-text" x="35" y="' + 15 + '">'
@@ -495,20 +429,18 @@ function createLegend(){
 
 // Create additional Control placeholders
 function addControlPlaceholders(map) {
-    var corners = map._controlCorners,
-      l = 'leaflet-',
-      container = map._controlContainer;
+    const corners = map._controlCorners, l = 'leaflet-', container = map._controlContainer;
 
     function createCorner(hSide, vSide) {
-      var className = l + hSide + ' ' + l + vSide;
+        const className = l + hSide + ' ' + l + vSide;
 
-      corners[hSide + vSide] = L.DomUtil.create('div', className, container);
+        corners[hSide + vSide] = L.DomUtil.create('div', className, container);
     }
 
     createCorner('horizontalcenter', 'top');
     createCorner('horizontalcenter', 'bottom');
   }
 
-document.addEventListener('DOMContentLoaded',createMap);
+document.addEventListener('DOMContentLoaded', createMap);
 
 })();
